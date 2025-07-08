@@ -1,4 +1,10 @@
 import { WebhookBitbucketCloudPR } from "./models/WebhookBitbucketCloudPR";
+import {
+  Branch,
+  Change,
+  Commit,
+  WebhookBitbucketCloudPush,
+} from "./models/WebhookBitbucketCloudPush";
 import { WebhookBitbucketOnPremisePR } from "./models/WebhookBitbucketOnPremisePR";
 
 export function transformBitbucketWebhookPRToOnPremisePR(
@@ -189,5 +195,103 @@ export function transformBitbucketWebhookPRToOnPremisePR(
           : [],
       },
     },
+  };
+}
+
+export function parseWebhookBitbucketCloudPRtoPush(
+  pr: WebhookBitbucketCloudPR
+): WebhookBitbucketCloudPush {
+  const commit: Commit = {
+    type: "commit",
+    hash: pr.pullrequest.source.commit.hash,
+    date: pr.pullrequest.updated_on,
+    author: {
+      type: "author",
+      raw: `${pr.actor.display_name} <${pr.actor.account_id}@example.com>`,
+      user: pr.actor,
+    },
+    committer: {},
+    message: pr.pullrequest.title,
+    summary: {
+      type: "rendered",
+      raw: pr.pullrequest.summary.raw,
+      markup: "markdown",
+      html: pr.pullrequest.summary.html,
+    },
+    links: pr.pullrequest.source.commit.links,
+    parents: [
+      {
+        hash: pr.pullrequest.destination.commit.hash,
+        links: pr.pullrequest.destination.commit.links,
+        type: "commit",
+      },
+    ],
+    rendered: {},
+    properties: {},
+  };
+
+  const branch: Branch = {
+    name: pr.pullrequest.source.branch.name,
+    target: commit,
+    links: {
+      self: pr.pullrequest.source.repository.links.self,
+      commits: {
+        href: `${pr.pullrequest.source.repository.links.commits?.href}/${pr.pullrequest.source.branch.name}`,
+      },
+      html: {
+        href: `${pr.pullrequest.source.repository.links.html?.href}/branch/${pr.pullrequest.source.branch.name}`,
+      },
+      pullrequest_create: {
+        href: `${pr.pullrequest.source.repository.links.html?.href}/pull-requests/new?source=${pr.pullrequest.source.branch.name}&t=1`,
+      },
+    },
+    type: "branch",
+    merge_strategies: [
+      "merge_commit",
+      "squash",
+      "fast_forward",
+      "squash_fast_forward",
+      "rebase_fast_forward",
+      "rebase_merge",
+    ],
+    sync_strategies: ["merge_commit", "rebase"],
+    default_merge_strategy: "merge_commit",
+  };
+
+  const change: Change = {
+    old: {
+      ...branch,
+      name: pr.pullrequest.destination.branch.name,
+      target: {
+        ...commit,
+        hash: pr.pullrequest.destination.commit.hash,
+        links: pr.pullrequest.destination.commit.links,
+      },
+    },
+    new: branch,
+    truncated: false,
+    created: false,
+    forced: false,
+    closed: false,
+    links: {
+      commits: {
+        href: `${pr.pullrequest.source.repository.links.commits?.href}?include=${pr.pullrequest.source.commit.hash}&exclude=${pr.pullrequest.destination.commit.hash}`,
+      },
+      diff: {
+        href: `${pr.pullrequest.source.repository.links.html?.href}/diff/${pr.pullrequest.source.commit.hash}..${pr.pullrequest.destination.commit.hash}`,
+      },
+      html: {
+        href: `${pr.pullrequest.source.repository.links.html?.href}/branches/compare/${pr.pullrequest.source.commit.hash}..${pr.pullrequest.destination.commit.hash}`,
+      },
+    },
+    commits: [commit],
+  };
+
+  return {
+    push: {
+      changes: [change],
+    },
+    repository: pr.repository,
+    actor: pr.actor,
   };
 }

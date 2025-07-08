@@ -84,7 +84,7 @@ interface PullRequest {
   locked: boolean;
   author: PullRequestAuthor;
   reviewers: PullRequestAuthor[];
-  participants: any[]; // Adjust type if participants have a specific structure
+  participants: any[];
   links: {
     self: SelfLink[];
   };

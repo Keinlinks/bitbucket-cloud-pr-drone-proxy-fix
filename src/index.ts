@@ -4,7 +4,10 @@ import * as https from "https";
 import type { Request, Response } from "express";
 import { createProxyMiddleware } from "http-proxy-middleware";
 import { WebhookBitbucketCloudPR } from "./models/WebhookBitbucketCloudPR";
-import { transformBitbucketWebhookPRToOnPremisePR } from "./utils";
+import {
+  parseWebhookBitbucketCloudPRtoPush,
+  transformBitbucketWebhookPRToOnPremisePR,
+} from "./utils";
 import { logger } from "./logging";
 require("dotenv").config();
 
@@ -51,13 +54,13 @@ const proxyMiddleware = createProxyMiddleware<Request, Response>({
         try {
           logger.info(`Transforming Bitbucket Cloud PR to On-Premise PR`);
           let bodyWebhookBitbicketOnPremise =
-            transformBitbucketWebhookPRToOnPremisePR(bodyWebhookBitbicketCloud);
+            parseWebhookBitbucketCloudPRtoPush(bodyWebhookBitbicketCloud);
           logger.info(`Transformed PR: ${bodyWebhookBitbicketOnPremise}`);
           let bodyData = JSON.stringify(bodyWebhookBitbicketOnPremise);
           logger.debug(`Body data parsed: ${bodyData}`);
 
           // Set the new headers and body for the proxy request
-          proxyReq.setHeader("X-Event-Key", "pr:opened");
+          proxyReq.setHeader("X-Event-Key", "repo:push");
           proxyReq.setHeader("Content-Type", "application/json");
           proxyReq.setHeader("Content-Length", Buffer.byteLength(bodyData));
 

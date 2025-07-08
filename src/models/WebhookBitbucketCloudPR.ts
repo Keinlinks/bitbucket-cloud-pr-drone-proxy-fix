@@ -1,11 +1,9 @@
+import { Link, Repository, User } from "./WebhookBitbucketCloudPush";
+
 export interface WebhookBitbucketCloudPR {
   repository: Repository;
   actor: User;
   pullrequest: PullRequest;
-}
-
-interface Link {
-  href: string;
 }
 
 interface Links {
@@ -46,30 +44,6 @@ interface Project {
   uuid: string;
   name: string;
   links: Links;
-}
-
-interface Repository {
-  type: string;
-  full_name: string;
-  links: Links;
-  name: string;
-  scm: string;
-  website: string | null;
-  owner: Owner;
-  workspace: Workspace;
-  is_private: boolean;
-  project: Project;
-  uuid: string;
-  parent: string | null;
-}
-
-interface User {
-  display_name: string;
-  links: Links;
-  type: string;
-  uuid: string;
-  account_id: string;
-  nickname: string;
 }
 
 interface RenderedContent {
