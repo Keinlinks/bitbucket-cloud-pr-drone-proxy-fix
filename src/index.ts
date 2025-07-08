@@ -41,7 +41,7 @@ const proxyMiddleware = createProxyMiddleware<Request, Response>({
     proxyReq(proxyReq, req, res) {
       // New request incoming to the proxy
       logger.debug(`Received request: ${req.method} ${req.url}`);
-      logger.debug(`Body: ${req.body}`);
+      logger.debug(`Body: ${JSON.stringify(req.body)}`);
       if (
         req.method == "POST" &&
         req.body &&
