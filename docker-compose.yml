@@ -56,6 +56,6 @@ services:
       - TARGET_URL=http://drone-server:3002
       - PROXY_PORT=443
       - ENVIRNMENT=production
+      - USE_HTTPS=true
     ports:
       - "443:443"
-  
