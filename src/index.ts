@@ -41,13 +41,14 @@ const proxyMiddleware = createProxyMiddleware<Request, Response>({
     proxyReq(proxyReq, req, res) {
       // New request incoming to the proxy
       logger.debug(`Received request: ${req.method} ${req.url}`);
+      logger.debug(`Body: ${req.body}`);
       if (
         req.method == "POST" &&
         req.body &&
         req.headers["x-event-key"] === "pullrequest:created"
       ) {
         let bodyWebhookBitbicketCloud = req.body as WebhookBitbucketCloudPR;
-        logger.debug(`Body data original: ${bodyWebhookBitbicketCloud}`);
+
         try {
           logger.info(`Transforming Bitbucket Cloud PR to On-Premise PR`);
           let bodyWebhookBitbicketOnPremise =
@@ -70,6 +71,7 @@ const proxyMiddleware = createProxyMiddleware<Request, Response>({
           return;
         }
       }
+      // If the request is not a PR creation event, just forward it
     },
     error: (err, req, res) => {
       logger.error(`Error in proxy request: ${err.message}`);
