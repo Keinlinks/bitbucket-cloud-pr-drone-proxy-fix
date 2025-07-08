@@ -19,11 +19,13 @@ app.use(express.urlencoded({ extended: true }));
 
 let key = undefined;
 let cert = undefined;
-try {
-  key = fs.readFileSync("/certs/key.pem");
-  cert = fs.readFileSync("/certs/cert.pem");
-} catch (error) {
-  logger.error(`Error reading SSL certificate files: ${error}`);
+if (process.env.USE_HTTPS) {
+  try {
+    key = fs.readFileSync("/certs/key.pem");
+    cert = fs.readFileSync("/certs/cert.pem");
+  } catch (error) {
+    logger.error(`Error reading SSL certificate files: ${error}`);
+  }
 }
 
 const proxyMiddleware = createProxyMiddleware<Request, Response>({
@@ -75,10 +77,6 @@ const proxyMiddleware = createProxyMiddleware<Request, Response>({
 });
 app.use("/", proxyMiddleware);
 
-const serverOptions = {
-  key,
-  cert,
-};
 let port: number;
 try {
   port = parseInt(process.env.PROXY_PORT as any);
@@ -88,7 +86,13 @@ try {
 }
 if (process.env.USE_HTTPS) {
   https
-    .createServer(serverOptions, app)
+    .createServer(
+      {
+        key,
+        cert,
+      },
+      app
+    )
     .listen(port, "0.0.0.0", undefined, () => {
       logger.info(
         `Proxy server is running on port ${
