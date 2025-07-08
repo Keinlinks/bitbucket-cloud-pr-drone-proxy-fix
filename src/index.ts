@@ -71,6 +71,13 @@ const proxyMiddleware = createProxyMiddleware<Request, Response>({
           return;
         }
         //other events like repo:push
+      } else if (
+        req.method == "POST" &&
+        req.body &&
+        req.headers["x-event-key"] === "pullrequest:updated"
+      ) {
+        logger.info(`Received pullrequest:updated event`);
+        logger.debug(`Request body: ${JSON.stringify(req.body)}`);
       } else if (req.method == "POST" && req.headers["x-event-key"]) {
         let bodyData = JSON.stringify(req.body);
         proxyReq.setHeader("Content-Type", "application/json");
