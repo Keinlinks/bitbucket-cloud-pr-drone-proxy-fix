@@ -1,12 +1,17 @@
 import * as express from "express";
 import * as fs from "fs";
+import * as https from "https";
 import type { Request, Response } from "express";
 import { createProxyMiddleware } from "http-proxy-middleware";
 import { WebhookBitbucketCloudPR } from "./models/WebhookBitbucketCloudPR";
 import { transformBitbucketWebhookPRToOnPremisePR } from "./utils";
 import { logger } from "./logging";
-
 require("dotenv").config();
+
+if (!process.env.TARGET_URL) {
+  console.error("Error: TARGET_URL undefined");
+  process.exit(1);
+}
 
 const app = express.default();
 app.use(express.json());
@@ -58,10 +63,17 @@ const proxyMiddleware = createProxyMiddleware<Request, Response>({
 });
 app.use("/", proxyMiddleware);
 
-app.listen(process.env.PROXY_PORT || 80, () => {
-  logger.info(
-    `Proxy server is running on port ${
-      process.env.PROXY_PORT || 80
-    }, target: ` + process.env.TARGET_URL
-  );
-});
+const serverOptions = {
+  key: fs.readFileSync("/certs/key.pem"),
+  cert: fs.readFileSync("/certs/cert.pem"),
+};
+
+https
+  .createServer(serverOptions, app)
+  .listen(process.env.PROXY_PORT || 443, () => {
+    logger.info(
+      `Proxy server is running on port ${
+        process.env.PROXY_PORT || 443
+      }, target: ` + process.env.TARGET_URL
+    );
+  });
