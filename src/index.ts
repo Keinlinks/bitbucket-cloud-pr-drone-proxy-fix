@@ -9,7 +9,7 @@ import { logger } from "./logging";
 require("dotenv").config();
 
 if (!process.env.TARGET_URL) {
-  console.error("Error: TARGET_URL undefined");
+  logger.error(`Error: TARGET_URL undefined`);
   process.exit(1);
 }
 
@@ -17,12 +17,21 @@ const app = express.default();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+let key = undefined;
+let cert = undefined;
+try {
+  key = fs.readFileSync("/certs/key.pem");
+  cert = fs.readFileSync("/certs/cert.pem");
+} catch (error) {
+  logger.error(`Error reading SSL certificate files: ${error}`);
+}
+
 const proxyMiddleware = createProxyMiddleware<Request, Response>({
   target: process.env.TARGET_URL,
   changeOrigin: true,
   ssl: {
-    key: fs.readFileSync("/certs/key.pem"),
-    cert: fs.readFileSync("/certs/cert.pem"),
+    key,
+    cert,
   },
   on: {
     proxyReq(proxyReq, req, res) {
@@ -64,8 +73,8 @@ const proxyMiddleware = createProxyMiddleware<Request, Response>({
 app.use("/", proxyMiddleware);
 
 const serverOptions = {
-  key: fs.readFileSync("/certs/key.pem"),
-  cert: fs.readFileSync("/certs/cert.pem"),
+  key,
+  cert,
 };
 
 https
