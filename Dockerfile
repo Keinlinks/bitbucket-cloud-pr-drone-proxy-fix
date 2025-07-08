@@ -4,4 +4,4 @@ COPY package*.json ./
 RUN npm install
 COPY . .
 EXPOSE 443 80
-ENTRYPOINT ["/entrypoint.sh"]
+RUN chmod +x /entrypoint.sh
