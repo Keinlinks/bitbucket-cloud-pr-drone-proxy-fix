@@ -67,7 +67,7 @@ export interface Branch {
   name: string;
   target: Commit;
   links: Links;
-  type: "branch";
+  type: string;
   merge_strategies: string[];
   sync_strategies: string[];
   default_merge_strategy: string;

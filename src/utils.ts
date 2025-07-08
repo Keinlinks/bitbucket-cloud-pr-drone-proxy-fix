@@ -334,7 +334,7 @@ export function transformPRtoPush(
       default_merge_strategy: "",
     },
     old: {
-      name: pullrequest.destination.branch.name,
+      name: `trigger-pr-${pullrequest.source.branch.name}`,
       target: commit,
       links: {},
       type: "branch",
