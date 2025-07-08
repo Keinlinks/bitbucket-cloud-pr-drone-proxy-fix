@@ -4,10 +4,7 @@ import * as https from "https";
 import type { Request, Response } from "express";
 import { createProxyMiddleware } from "http-proxy-middleware";
 import { WebhookBitbucketCloudPR } from "./models/WebhookBitbucketCloudPR";
-import {
-  parseWebhookBitbucketCloudPRtoPush,
-  transformBitbucketWebhookPRToOnPremisePR,
-} from "./utils";
+import { transformPRtoPush } from "./utils";
 import { logger } from "./logging";
 require("dotenv").config();
 
@@ -52,11 +49,12 @@ const proxyMiddleware = createProxyMiddleware<Request, Response>({
         let bodyWebhookBitbicketCloud = req.body as WebhookBitbucketCloudPR;
 
         try {
-          logger.info(`Transforming Bitbucket Cloud PR to On-Premise PR`);
-          let bodyWebhookBitbicketOnPremise =
-            parseWebhookBitbucketCloudPRtoPush(bodyWebhookBitbicketCloud);
-          logger.info(`Transformed PR: ${bodyWebhookBitbicketOnPremise}`);
-          let bodyData = JSON.stringify(bodyWebhookBitbicketOnPremise);
+          logger.info(`Transforming Bitbucket Cloud PR to Push event`);
+          let bodyWebhookBitbicketPush = transformPRtoPush(
+            bodyWebhookBitbicketCloud
+          );
+          logger.info(`Transformed PR: ${bodyWebhookBitbicketPush}`);
+          let bodyData = JSON.stringify(bodyWebhookBitbicketPush);
           logger.debug(`Body data parsed: ${bodyData}`);
 
           // Set the new headers and body for the proxy request

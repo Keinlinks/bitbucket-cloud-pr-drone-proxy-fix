@@ -295,3 +295,69 @@ export function parseWebhookBitbucketCloudPRtoPush(
     actor: pr.actor,
   };
 }
+
+export function transformPRtoPush(
+  prPayload: WebhookBitbucketCloudPR
+): WebhookBitbucketCloudPush {
+  const { pullrequest, repository, actor } = prPayload;
+
+  const commit: Commit = {
+    type: "commit",
+    hash: pullrequest.source.commit.hash,
+    date: pullrequest.created_on,
+    message: `Pull Request: ${pullrequest.title}`,
+    author: {
+      type: "author",
+      raw: pullrequest.author.display_name,
+      user: pullrequest.author,
+    },
+    committer: {},
+    summary: {
+      type: "rendered",
+      raw: pullrequest.title,
+      markup: "markdown",
+      html: `<p>${pullrequest.title}</p>`,
+    },
+    links: pullrequest.source.commit.links,
+    parents: [],
+    rendered: {},
+    properties: {},
+  };
+
+  const change: Change = {
+    new: {
+      name: pullrequest.source.branch.name,
+      target: commit,
+      links: {},
+      type: "branch",
+      merge_strategies: [],
+      sync_strategies: pullrequest.source.branch.sync_strategies || [],
+      default_merge_strategy: "",
+    },
+    old: {
+      name: pullrequest.destination.branch.name,
+      target: commit,
+      links: {},
+      type: "branch",
+      merge_strategies: [],
+      sync_strategies: [],
+      default_merge_strategy: "",
+    },
+    truncated: false,
+    created: false,
+    forced: false,
+    closed: false,
+    links: {},
+    commits: [commit],
+  };
+
+  const pushPayload: WebhookBitbucketCloudPush = {
+    push: {
+      changes: [change],
+    },
+    repository,
+    actor,
+  };
+
+  return pushPayload;
+}
