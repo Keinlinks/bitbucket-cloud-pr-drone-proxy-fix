@@ -1,9 +1,10 @@
-import * as express from 'express';
-import type { Request, Response } from 'express';
-import { createProxyMiddleware } from 'http-proxy-middleware';
-import { WebhookBitbucketCloudPR } from './models/WebhookBitbucketCloudPR';
-import { transformBitbucketWebhookPRToOnPremisePR } from './utils';
-import { logger } from './logging';
+import * as express from "express";
+import * as fs from "fs";
+import type { Request, Response } from "express";
+import { createProxyMiddleware } from "http-proxy-middleware";
+import { WebhookBitbucketCloudPR } from "./models/WebhookBitbucketCloudPR";
+import { transformBitbucketWebhookPRToOnPremisePR } from "./utils";
+import { logger } from "./logging";
 
 require("dotenv").config();
 
@@ -14,18 +15,23 @@ app.use(express.urlencoded({ extended: true }));
 const proxyMiddleware = createProxyMiddleware<Request, Response>({
   target: process.env.TARGET_URL,
   changeOrigin: true,
+  ssl: {
+    key: fs.readFileSync("/certs/key.pem"),
+    cert: fs.readFileSync("/certs/cert.pem"),
+  },
   on: {
     proxyReq(proxyReq, req, res) {
       // New request incoming to the proxy
       logger.debug(`Received request: ${req.method} ${req.url}`);
       logger.info(`Proxying request to target: ${process.env.TARGET_URL}`);
 
-      if (req.method == 'POST' && req.body && req.body.pullrequest) {
+      if (req.method == "POST" && req.body && req.body.pullrequest) {
         let bodyWebhookBitbicketCloud = req.body as WebhookBitbucketCloudPR;
         logger.debug(`Body data original: ${bodyWebhookBitbicketCloud}`);
-        try{
+        try {
           logger.info(`Transforming Bitbucket Cloud PR to On-Premise PR`);
-          let bodyWebhookBitbicketOnPremise = transformBitbucketWebhookPRToOnPremisePR(bodyWebhookBitbicketCloud);
+          let bodyWebhookBitbicketOnPremise =
+            transformBitbucketWebhookPRToOnPremisePR(bodyWebhookBitbicketCloud);
           logger.info(`Transformed PR: ${bodyWebhookBitbicketOnPremise}`);
           let bodyData = JSON.stringify(bodyWebhookBitbicketOnPremise);
           logger.debug(`Body data parsed: ${bodyData}`);
@@ -33,10 +39,11 @@ const proxyMiddleware = createProxyMiddleware<Request, Response>({
           proxyReq.setHeader("Content-Type", "application/json");
           proxyReq.setHeader("Content-Length", Buffer.byteLength(bodyData));
           proxyReq.write(bodyData);
-        }
-        catch (error) {
-          logger.error(`Error transforming Bitbucket Cloud PR to On-Premise PR: ${error}`);
-          res.status(500).send('Internal Server Error');
+        } catch (error) {
+          logger.error(
+            `Error transforming Bitbucket Cloud PR to On-Premise PR: ${error}`
+          );
+          res.status(500).send("Internal Server Error");
           return;
         }
       }
@@ -47,10 +54,14 @@ const proxyMiddleware = createProxyMiddleware<Request, Response>({
     proxyRes: (proxyRes, req, res) => {
       logger.error(`received response from target: ${proxyRes.statusCode}`);
     },
-  }
+  },
 });
-app.use('/', proxyMiddleware);
+app.use("/", proxyMiddleware);
 
-app.listen(process.env.PROXY_PORT || 80, ()=>{
-  logger.info(`Proxy server is running on port ${process.env.PROXY_PORT || 80}, target: ` + process.env.TARGET_URL);
+app.listen(process.env.PROXY_PORT || 80, () => {
+  logger.info(
+    `Proxy server is running on port ${
+      process.env.PROXY_PORT || 80
+    }, target: ` + process.env.TARGET_URL
+  );
 });
