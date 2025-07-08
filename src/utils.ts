@@ -327,7 +327,7 @@ export function transformPRtoPush(
     new: {
       name: `trigger-pr-${pullrequest.source.branch.name}`,
       target: commit,
-      links: {},
+      links: pullrequest.source.commit.links,
       type: "branch",
       merge_strategies: [],
       sync_strategies: pullrequest.source.branch.sync_strategies || [],
@@ -335,8 +335,8 @@ export function transformPRtoPush(
     },
     old: {
       name: `trigger-pr-${pullrequest.source.branch.name}`,
-      target: commit,
-      links: {},
+      target: { ...commit, hash: "53d31cb65ad5471ac079c13235e7f13f03420285" },
+      links: pullrequest.source.commit.links,
       type: "branch",
       merge_strategies: [],
       sync_strategies: [],
