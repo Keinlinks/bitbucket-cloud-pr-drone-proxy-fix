@@ -1,15 +1,14 @@
 {
   "name": "drone_proxy",
-  "version": "1.0.0",
-  "main": "index.js",
+  "version": "0.1.0",
+  "main": "dist/index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "tsc && node ./dist/index.js",
+    "start": "tsc && node ./dist/index.js",
     "build": "tsc"
   },
   "author": "kevin clift",
-  "license": "ISC",
-  "description": "",
+  "license": "MIT",
+  "description": "Reverse proxy to fix integration issues between Drone CI and Bitbucket Cloud.",
   "dependencies": {
     "dotenv": "^17.1.0",
     "express": "^5.1.0",
@@ -22,5 +21,8 @@
     "@types/http-proxy-middleware": "^1.0.0",
     "@types/node": "^24.0.10",
     "typescript": "^5.8.3"
+  },
+  "engines": {
+    "node": ">=18.0.0"
   }
 }
