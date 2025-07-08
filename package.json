@@ -1,0 +1,26 @@
+{
+  "name": "drone_proxy",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "tsc && node ./dist/index.js",
+    "build": "tsc"
+  },
+  "author": "kevin clift",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "dotenv": "^17.1.0",
+    "express": "^5.1.0",
+    "http-proxy-middleware": "^3.0.5",
+    "winston": "^3.17.0"
+  },
+  "devDependencies": {
+    "@types/winston": "^2.4.4",
+    "@types/express": "^5.0.3",
+    "@types/http-proxy-middleware": "^1.0.0",
+    "@types/node": "^24.0.10",
+    "typescript": "^5.8.3"
+  }
+}

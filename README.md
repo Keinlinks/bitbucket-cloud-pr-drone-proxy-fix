@@ -1,0 +1,1 @@
+This proxy server acts as a middleware layer to resolve compatibility issues between Drone CI and Bitbucket Cloud, specifically addressing webhook or redirect problems. Designed to be lightweight, easily deployable, and configurable.
