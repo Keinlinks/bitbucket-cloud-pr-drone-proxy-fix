@@ -84,7 +84,7 @@ try {
   logger.error(`Error parsing PROXY_PORT: ${error}`);
   port = 443;
 }
-if (process.env.USE_HTTPS) {
+if (process.env.USE_HTTPS === "true") {
   https
     .createServer(
       {
