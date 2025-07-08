@@ -33,6 +33,9 @@ const proxyMiddleware = createProxyMiddleware<Request, Response>({
     key,
     cert,
   },
+  timeout: 60000,
+  proxyTimeout: 60000,
+  secure: false,
   on: {
     proxyReq(proxyReq, req, res) {
       // New request incoming to the proxy
@@ -66,7 +69,7 @@ const proxyMiddleware = createProxyMiddleware<Request, Response>({
       logger.error(`Error in proxy request: ${err.message}`);
     },
     proxyRes: (proxyRes, req, res) => {
-      logger.error(`received response from target: ${proxyRes.statusCode}`);
+      logger.debug(`received response, code: ${proxyRes.statusCode}`);
     },
   },
 });
@@ -83,13 +86,21 @@ try {
   logger.error(`Error parsing PROXY_PORT: ${error}`);
   port = 443;
 }
-
-https
-  .createServer(serverOptions, app)
-  .listen(port || 443, "0.0.0.0", undefined, () => {
+if (process.env.USE_HTTPS) {
+  https
+    .createServer(serverOptions, app)
+    .listen(port, "0.0.0.0", undefined, () => {
+      logger.info(
+        `Proxy server is running on port ${
+          process.env.PROXY_PORT || 443
+        }, target: ` + process.env.TARGET_URL
+      );
+    });
+} else {
+  app.listen(port, "0.0.0.0", () => {
     logger.info(
-      `Proxy server is running on port ${
-        process.env.PROXY_PORT || 443
-      }, target: ` + process.env.TARGET_URL
+      `Proxy server is running on port ${port}, target: ` +
+        process.env.TARGET_URL
     );
   });
+}
