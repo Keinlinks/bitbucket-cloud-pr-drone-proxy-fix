@@ -1,3 +1,5 @@
+#!/bin/sh
+
 CERT_DIR=/certs
 KEY_FILE=$CERT_DIR/key.pem
 CERT_FILE=$CERT_DIR/cert.pem
