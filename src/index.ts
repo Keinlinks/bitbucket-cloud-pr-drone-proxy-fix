@@ -34,14 +34,13 @@ const proxyMiddleware = createProxyMiddleware<Request, Response>({
     key,
     cert,
   },
-  timeout: 60000,
-  proxyTimeout: 60000,
+  timeout: 90000,
+  proxyTimeout: 90000,
   secure: false,
   on: {
     proxyReq(proxyReq, req, res) {
       // New request incoming to the proxy
       logger.debug(`Received request: ${req.method} ${req.url}`);
-      logger.debug(`Body: ${JSON.stringify(req.body)}`);
       if (
         req.method == "POST" &&
         req.body &&
@@ -70,8 +69,13 @@ const proxyMiddleware = createProxyMiddleware<Request, Response>({
           res.status(500).send("Internal Server Error");
           return;
         }
+      } else if (req.method == "POST" && req.headers["x-event-key"]) {
+        let bodyData = JSON.stringify(req.body);
+        proxyReq.setHeader("Content-Type", "application/json");
+        proxyReq.setHeader("Content-Length", Buffer.byteLength(bodyData));
+        proxyReq.write(bodyData);
+        logger.debug(`Forwarding body for event ${req.headers["x-event-key"]}`);
       }
-      // If the request is not a PR creation event, just forward it
     },
     error: (err, req, res) => {
       logger.error(`Error in proxy request: ${err.message}`);
