@@ -76,10 +76,17 @@ const serverOptions = {
   key,
   cert,
 };
+let port: number;
+try {
+  port = parseInt(process.env.PROXY_PORT as any);
+} catch (error) {
+  logger.error(`Error parsing PROXY_PORT: ${error}`);
+  port = 443;
+}
 
 https
   .createServer(serverOptions, app)
-  .listen(process.env.PROXY_PORT || 443, () => {
+  .listen(port || 443, "0.0.0.0", undefined, () => {
     logger.info(
       `Proxy server is running on port ${
         process.env.PROXY_PORT || 443
