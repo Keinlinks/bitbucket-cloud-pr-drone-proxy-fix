@@ -95,15 +95,14 @@ if (process.env.USE_HTTPS) {
     )
     .listen(port, "0.0.0.0", undefined, () => {
       logger.info(
-        `Proxy server is running on port ${
-          process.env.PROXY_PORT || 443
-        }, target: ` + process.env.TARGET_URL
+        `Proxy server HTTPS is running on port ${port}, target: ` +
+          process.env.TARGET_URL
       );
     });
 } else {
   app.listen(port, "0.0.0.0", () => {
     logger.info(
-      `Proxy server is running on port ${port}, target: ` +
+      `Proxy server HTTP is running on port ${port}, target: ` +
         process.env.TARGET_URL
     );
   });
