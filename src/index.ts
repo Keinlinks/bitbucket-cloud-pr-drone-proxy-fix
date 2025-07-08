@@ -42,9 +42,11 @@ const proxyMiddleware = createProxyMiddleware<Request, Response>({
     proxyReq(proxyReq, req, res) {
       // New request incoming to the proxy
       logger.debug(`Received request: ${req.method} ${req.url}`);
-      logger.info(`Proxying request to target: ${process.env.TARGET_URL}`);
-
-      if (req.method == "POST" && req.body && req.body.pullrequest) {
+      if (
+        req.method == "POST" &&
+        req.body &&
+        req.headers["x-event-key"] === "pullrequest:created"
+      ) {
         let bodyWebhookBitbicketCloud = req.body as WebhookBitbucketCloudPR;
         logger.debug(`Body data original: ${bodyWebhookBitbicketCloud}`);
         try {
@@ -55,8 +57,11 @@ const proxyMiddleware = createProxyMiddleware<Request, Response>({
           let bodyData = JSON.stringify(bodyWebhookBitbicketOnPremise);
           logger.debug(`Body data parsed: ${bodyData}`);
 
+          // Set the new headers and body for the proxy request
+          proxyReq.setHeader("X-Event-Key", "pr:opened");
           proxyReq.setHeader("Content-Type", "application/json");
           proxyReq.setHeader("Content-Length", Buffer.byteLength(bodyData));
+
           proxyReq.write(bodyData);
         } catch (error) {
           logger.error(
@@ -71,7 +76,7 @@ const proxyMiddleware = createProxyMiddleware<Request, Response>({
       logger.error(`Error in proxy request: ${err.message}`);
     },
     proxyRes: (proxyRes, req, res) => {
-      logger.debug(`received response, code: ${proxyRes.statusCode}`);
+      logger.debug(`Sending response, code: ${proxyRes.statusCode}`);
     },
   },
 });
