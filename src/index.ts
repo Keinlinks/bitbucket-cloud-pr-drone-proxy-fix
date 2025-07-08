@@ -69,6 +69,7 @@ const proxyMiddleware = createProxyMiddleware<Request, Response>({
           res.status(500).send("Internal Server Error");
           return;
         }
+        //other events like repo:push
       } else if (req.method == "POST" && req.headers["x-event-key"]) {
         let bodyData = JSON.stringify(req.body);
         proxyReq.setHeader("Content-Type", "application/json");

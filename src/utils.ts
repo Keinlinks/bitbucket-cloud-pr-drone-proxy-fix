@@ -4,23 +4,21 @@ import { WebhookBitbucketOnPremisePR } from "./models/WebhookBitbucketOnPremiseP
 export function transformBitbucketWebhookPRToOnPremisePR(
   input: WebhookBitbucketCloudPR
 ): WebhookBitbucketOnPremisePR {
-  // Extraer el slug del repositorio desde full_name (e.g., "workspace/repo" -> "repo")
   const repoSlug =
     input.repository.full_name.split("/")[1] || input.repository.name;
 
-  // Convertir fechas ISO a timestamps (milisegundos)
   const createdDate = new Date(input.pullrequest.created_on).getTime();
   const updatedDate = new Date(input.pullrequest.updated_on).getTime();
 
   return {
-    eventKey: "pullrequest:created", // Valor predeterminado, ajustar según el evento
-    date: input.pullrequest.created_on, // Mantener como cadena ISO
+    eventKey: "pr:opened",
+    date: input.pullrequest.created_on,
     actor: {
       name: input.actor.nickname || input.actor.display_name,
-      emailAddress: "", // No disponible en BitbucketWebhookPR
-      id: parseInt(input.actor.account_id, 16) || 0, // Convertir account_id a número
+      emailAddress: "",
+      id: parseInt(input.actor.account_id, 16) || 0,
       displayName: input.actor.display_name,
-      active: true, // Suposición
+      active: true,
       slug:
         input.actor.nickname ||
         input.actor.display_name.toLowerCase().replace(/\s+/g, "-"),
@@ -33,7 +31,7 @@ export function transformBitbucketWebhookPRToOnPremisePR(
     },
     pullRequest: {
       id: input.pullrequest.id,
-      version: 1, // No disponible en BitbucketWebhookPR, valor predeterminado
+      version: 1,
       title: input.pullrequest.title,
       description: input.pullrequest.description || "",
       state: input.pullrequest.state,
@@ -55,20 +53,20 @@ export function transformBitbucketWebhookPRToOnPremisePR(
               16
             ) || 0,
           name: input.pullrequest.source.repository.name,
-          description: "", // No disponible en Repository3
+          description: "",
           scmId: input.pullrequest.source.repository.type,
-          state: "AVAILABLE", // Suposición
-          statusMessage: "Available", // Suposición
-          forkable: true, // Suposición
+          state: "AVAILABLE",
+          statusMessage: "Available",
+          forkable: true,
           project: {
-            key: input.repository.project.key, // Usar project desde el repositorio raíz
+            key: input.repository.project.key,
             id:
               parseInt(
                 input.repository.project.uuid.replace(/[{}]/g, ""),
                 16
               ) || 0,
             name: input.repository.project.name,
-            description: "", // No disponible
+            description: "",
             public: !input.repository.is_private,
             type: input.repository.project.type,
             links: {
@@ -79,7 +77,7 @@ export function transformBitbucketWebhookPRToOnPremisePR(
           },
           public: !input.repository.is_private,
           links: {
-            clone: [], // No disponible en Repository3
+            clone: [],
             self: input.pullrequest.source.repository.links.self
               ? [{ href: input.pullrequest.source.repository.links.self.href }]
               : [],
@@ -101,20 +99,20 @@ export function transformBitbucketWebhookPRToOnPremisePR(
               16
             ) || 0,
           name: input.pullrequest.destination.repository.name,
-          description: "", // No disponible en Repository2
+          description: "",
           scmId: input.pullrequest.destination.repository.type,
-          state: "AVAILABLE", // Suposición
-          statusMessage: "Available", // Suposición
-          forkable: true, // Suposición
+          state: "AVAILABLE",
+          statusMessage: "Available",
+          forkable: true,
           project: {
-            key: input.repository.project.key, // Usar project desde el repositorio raíz
+            key: input.repository.project.key,
             id:
               parseInt(
                 input.repository.project.uuid.replace(/[{}]/g, ""),
                 16
               ) || 0,
             name: input.repository.project.name,
-            description: "", // No disponible
+            description: "",
             public: !input.repository.is_private,
             type: input.repository.project.type,
             links: {
@@ -125,7 +123,7 @@ export function transformBitbucketWebhookPRToOnPremisePR(
           },
           public: !input.repository.is_private,
           links: {
-            clone: [], // No disponible en Repository2
+            clone: [],
             self: input.pullrequest.destination.repository.links.self
               ? [
                   {
@@ -137,16 +135,16 @@ export function transformBitbucketWebhookPRToOnPremisePR(
           },
         },
       },
-      locked: false, // No disponible en BitbucketWebhookPR
+      locked: false,
       author: {
         user: {
           name:
             input.pullrequest.author.nickname ||
             input.pullrequest.author.display_name,
-          emailAddress: "", // No disponible
+          emailAddress: "",
           id: parseInt(input.pullrequest.author.account_id, 16) || 0,
           displayName: input.pullrequest.author.display_name,
-          active: true, // Suposición
+          active: true,
           slug:
             input.pullrequest.author.nickname ||
             input.pullrequest.author.display_name
@@ -160,16 +158,16 @@ export function transformBitbucketWebhookPRToOnPremisePR(
           },
         },
         role: "AUTHOR",
-        approved: false, // No disponible
+        approved: false,
         status: input.pullrequest.state,
       },
       reviewers: input.pullrequest.reviewers.map((reviewer) => ({
         user: {
           name: reviewer.nickname || reviewer.display_name,
-          emailAddress: "", // No disponible
+          emailAddress: "",
           id: parseInt(reviewer.account_id, 16) || 0,
           displayName: reviewer.display_name,
-          active: true, // Suposición
+          active: true,
           slug:
             reviewer.nickname ||
             reviewer.display_name.toLowerCase().replace(/\s+/g, "-"),
@@ -181,8 +179,8 @@ export function transformBitbucketWebhookPRToOnPremisePR(
           },
         },
         role: "REVIEWER",
-        approved: false, // No disponible
-        status: "", // No disponible
+        approved: false,
+        status: "",
       })),
       participants: input.pullrequest.participants,
       links: {
