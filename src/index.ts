@@ -50,16 +50,9 @@ const proxyMiddleware = createProxyMiddleware<Request, Response>({
         let bodyWebhookBitbicketCloud = req.body as WebhookBitbucketCloudPR;
 
         try {
-          logger.info(`Transforming Bitbucket Cloud PR to Push event`);
-          let bodyWebhookBitbicketPush = transformPRtoPush(
-            bodyWebhookBitbicketCloud
-          );
-          logger.info(`Transformed PR: ${bodyWebhookBitbicketPush}`);
-          let bodyData = JSON.stringify(bodyWebhookBitbicketPush);
-          logger.debug(`Body data parsed: ${bodyData}`);
-
+          let bodyData = JSON.stringify(bodyWebhookBitbicketCloud);
           // Set the new headers and body for the proxy request
-          proxyReq.setHeader("X-Event-Key", "repo:push");
+          proxyReq.setHeader("X-Event-Key", "pullrequest:created");
           proxyReq.setHeader("Content-Type", "application/json");
           proxyReq.setHeader("Content-Length", Buffer.byteLength(bodyData));
 
@@ -71,13 +64,12 @@ const proxyMiddleware = createProxyMiddleware<Request, Response>({
           res.status(500).send("Internal Server Error");
           return;
         }
-        //other events like repo:push
-      } else if (req.method == "POST" && req.headers["x-event-key"]) {
+        //other events POST event
+      } else if (req.method == "POST") {
         let bodyData = JSON.stringify(req.body);
         proxyReq.setHeader("Content-Type", "application/json");
         proxyReq.setHeader("Content-Length", Buffer.byteLength(bodyData));
         proxyReq.write(bodyData);
-        logger.debug(`Forwarding body for event ${req.headers["x-event-key"]}`);
       }
     },
     error: (err, req, res) => {

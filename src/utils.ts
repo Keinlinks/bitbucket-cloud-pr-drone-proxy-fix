@@ -325,7 +325,7 @@ export function transformPRtoPush(
 
   const change: Change = {
     new: {
-      name: `trigger-pr-${pullrequest.source.branch.name}`,
+      name: `${pullrequest.source.branch.name}`,
       target: commit,
       links: pullrequest.source.commit.links,
       type: "branch",
@@ -334,7 +334,7 @@ export function transformPRtoPush(
       default_merge_strategy: "",
     },
     old: {
-      name: `trigger-pr-${pullrequest.source.branch.name}`,
+      name: `${pullrequest.source.branch.name}`,
       target: { ...commit, hash: "53d31cb65ad5471ac079c13235e7f13f03420285" },
       links: pullrequest.source.commit.links,
       type: "branch",
