@@ -40,6 +40,9 @@ const proxyMiddleware = createProxyMiddleware<Request, Response>({
   on: {
     proxyReq(proxyReq, req, res) {
       // New request incoming to the proxy
+      if (req.headers["x-event-key"]) {
+        logger.debug(`X-Event-Key: ${req.headers["x-event-key"]}`);
+      }
       logger.debug(`Received request: ${req.method} ${req.url}`);
       if (
         req.method == "POST" &&
@@ -48,7 +51,6 @@ const proxyMiddleware = createProxyMiddleware<Request, Response>({
           req.headers["x-event-key"] === "pullrequest:updated")
       ) {
         let bodyWebhookBitbicketCloud = req.body as WebhookBitbucketCloudPR;
-
         try {
           let bodyData = JSON.stringify(bodyWebhookBitbicketCloud);
           // Set the new headers and body for the proxy request
