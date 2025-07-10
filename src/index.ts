@@ -4,7 +4,7 @@ import * as https from "https";
 import type { Request, Response } from "express";
 import { createProxyMiddleware } from "http-proxy-middleware";
 import { WebhookBitbucketCloudPR } from "./models/WebhookBitbucketCloudPR";
-import { transformPRtoPush } from "./utils";
+import { transformPRtoPush, verifyJson } from "./utils";
 import { logger } from "./logging";
 require("dotenv").config();
 
@@ -70,10 +70,7 @@ const proxyMiddleware = createProxyMiddleware<Request, Response>({
           return;
         }
         //other events POST event
-      } else if (
-        req.method == "POST" &&
-        req.headers["Content-Type"] === "application/json"
-      ) {
+      } else if (verifyJson(req.body)) {
         let bodyData = JSON.stringify(req.body);
         proxyReq.setHeader("Content-Type", "application/json");
         proxyReq.setHeader("Content-Length", Buffer.byteLength(bodyData));

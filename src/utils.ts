@@ -360,3 +360,13 @@ export function transformPRtoPush(
 
   return pushPayload;
 }
+
+export function verifyJson(json: any) {
+  if (json === null || json === undefined) return false;
+  try {
+    JSON.parse(JSON.stringify(json));
+    return true;
+  } catch (error) {
+    return false;
+  }
+}
