@@ -66,7 +66,10 @@ const proxyMiddleware = createProxyMiddleware<Request, Response>({
           return;
         }
         //other events POST event
-      } else if (req.method == "POST") {
+      } else if (
+        req.method == "POST" &&
+        req.headers["Content-Type"] === "application/json"
+      ) {
         let bodyData = JSON.stringify(req.body);
         proxyReq.setHeader("Content-Type", "application/json");
         proxyReq.setHeader("Content-Length", Buffer.byteLength(bodyData));
