@@ -41,7 +41,11 @@ const proxyMiddleware = createProxyMiddleware<Request, Response>({
     proxyReq(proxyReq, req, res) {
       // New request incoming to the proxy
       logger.debug(
-        `Received request: ${req.method} ${req.url} ${req.headers["x-event-key"]}`
+        `Received request: ${req.method} ${req.url} ${
+          req.headers["x-event-key"]
+            ? "X-Event-Key: " + req.headers["x-event-key"]
+            : ""
+        }`
       );
       if (
         req.method == "POST" &&
