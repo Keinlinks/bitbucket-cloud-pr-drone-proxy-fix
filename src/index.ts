@@ -13,12 +13,14 @@ if (!process.env.TARGET_URL) {
   process.exit(1);
 }
 
+let useHttps = process.env.USE_HTTPS == "true";
+
 const app = express.default();
 app.use(express.json({ limit: "10mb" }));
 
 let key = undefined;
 let cert = undefined;
-if (process.env.USE_HTTPS) {
+if (useHttps) {
   try {
     key = fs.readFileSync("/certs/key.pem");
     cert = fs.readFileSync("/certs/cert.pem");
@@ -73,11 +75,10 @@ const proxyMiddleware = createProxyMiddleware<Request, Response>({
         }
         //other events like repo:push
       } else if (req.method == "POST" && req.headers["x-event-key"]) {
-        let bodyData = JSON.stringify(req.body);
-        proxyReq.setHeader("Content-Type", "application/json");
-        proxyReq.setHeader("Content-Length", Buffer.byteLength(bodyData));
-        proxyReq.write(bodyData);
-        logger.debug(`Forwarding body for event ${req.headers["x-event-key"]}`);
+        logger.debug(
+          `Event key: ${req.headers["x-event-key"]}, ignored`
+        );
+        res.status(200).send("OK");
       }
     },
     error: (err, req, res) => {
@@ -97,7 +98,7 @@ try {
   logger.error(`Error parsing PROXY_PORT: ${error}`);
   port = 443;
 }
-if (process.env.USE_HTTPS === "true") {
+if (useHttps) {
   https
     .createServer(
       {
