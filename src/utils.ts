@@ -1,6 +1,5 @@
 import { WebhookBitbucketCloudPR } from "./models/WebhookBitbucketCloudPR";
 import {
-  Branch,
   Change,
   Commit,
   WebhookBitbucketCloudPush,

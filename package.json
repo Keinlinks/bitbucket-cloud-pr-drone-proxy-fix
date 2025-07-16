@@ -8,7 +8,7 @@
   },
   "author": "kevin clift",
   "license": "MIT",
-  "description": "Reverse proxy to fix integration issues between Drone CI and Bitbucket Cloud.",
+  "description": "Reverse proxy to fix Pull Request issues between Drone CI and Bitbucket Cloud.",
   "dependencies": {
     "dotenv": "^17.1.0",
     "express": "^5.1.0",
