@@ -6,18 +6,30 @@ import { createProxyMiddleware } from "http-proxy-middleware";
 import { WebhookBitbucketCloudPR } from "./models/WebhookBitbucketCloudPR";
 import { transformPRtoPush } from "./utils";
 import { logger } from "./logging";
+import { WebhookBitbucketCloudPush } from "./models/WebhookBitbucketCloudPush";
+import { ProxyConfig } from "./proxyConfig";
 require("dotenv").config();
 
-if (!process.env.TARGET_URL) {
+
+//ENVIRONMENT
+let target = process.env.TARGET_URL;
+let useHttps = process.env.USE_HTTPS == "true";
+let port: number;
+try {
+  port = parseInt(process.env.PROXY_PORT as any);
+} catch (error) {
+  logger.error(`Error parsing PROXY_PORT: ${error}`);
+  port = 443;
+}
+if (!target) {
   logger.error(`Error: TARGET_URL undefined`);
   process.exit(1);
 }
-
-let useHttps = process.env.USE_HTTPS == "true";
-
+//Creating server
 const app = express.default();
 app.use(express.json({ limit: "10mb" }));
 
+//Just in case use Https
 let key = undefined;
 let cert = undefined;
 if (useHttps) {
@@ -29,6 +41,7 @@ if (useHttps) {
   }
 }
 
+//Creating proxy middleware
 const proxyMiddleware = createProxyMiddleware<Request, Response>({
   target: process.env.TARGET_URL,
   changeOrigin: true,
@@ -56,9 +69,7 @@ const proxyMiddleware = createProxyMiddleware<Request, Response>({
           let bodyWebhookBitbicketPush = transformPRtoPush(
             bodyWebhookBitbicketCloud
           );
-          logger.info(`Transformed PR: ${bodyWebhookBitbicketPush}`);
           let bodyData = JSON.stringify(bodyWebhookBitbicketPush);
-          logger.debug(`Body data parsed: ${bodyData}`);
 
           // Set the new headers and body for the proxy request
           proxyReq.setHeader("X-Event-Key", "repo:push");
@@ -68,16 +79,37 @@ const proxyMiddleware = createProxyMiddleware<Request, Response>({
           proxyReq.write(bodyData);
         } catch (error) {
           logger.error(
-            `Error transforming Bitbucket Cloud PR to On-Premise PR: ${error}`
+            `Error transforming Bitbucket Cloud PR to Push: ${error}`
           );
           res.status(500).send("Internal Server Error");
           return;
         }
-        //other events like repo:push
-      } else if (req.method == "POST" && req.headers["x-event-key"]) {
-        logger.debug(
-          `Event key: ${req.headers["x-event-key"]}, ignored`
-        );
+      }
+      else if (req.method == "POST" && req.headers["x-event-key"] == "repo:push") {
+        let bodyWebhookBitbicketPush = req.body as WebhookBitbucketCloudPush;
+        let branch = bodyWebhookBitbicketPush.push.changes[0].new.name;
+        if (!branch){
+          bodyWebhookBitbicketPush.push.changes[0].old.name;
+        }
+        let proxyConfig = ProxyConfig.getInstance();
+
+        if (proxyConfig.branchesAllowPush.includes(branch)) {
+          let bodyData = JSON.stringify(bodyWebhookBitbicketPush);
+          proxyReq.setHeader("X-Event-Key", "repo:push");
+          proxyReq.setHeader("Content-Type", "application/json");
+          proxyReq.setHeader("Content-Length", Buffer.byteLength(bodyData));
+
+          proxyReq.write(bodyData);
+        } else {
+          logger.debug(
+            `Event key: ${req.headers["x-event-key"]} to branch ${branch}, ignored`
+          );
+          res.status(200).send("OK");
+        }
+      }
+      //other events like pullrequest:rejected or pullrequest:fulfilled
+      else if (req.method == "POST" && req.headers["x-event-key"]) {
+        logger.debug(`Event key: ${req.headers["x-event-key"]}, ignored`);
         res.status(200).send("OK");
       }
     },
@@ -85,19 +117,13 @@ const proxyMiddleware = createProxyMiddleware<Request, Response>({
       logger.error(`Error in proxy request: ${err.message}`);
     },
     proxyRes: (proxyRes, req, res) => {
-      logger.debug(`Sending response, code: ${proxyRes.statusCode}`);
+      
     },
   },
 });
 app.use("/", proxyMiddleware);
 
-let port: number;
-try {
-  port = parseInt(process.env.PROXY_PORT as any);
-} catch (error) {
-  logger.error(`Error parsing PROXY_PORT: ${error}`);
-  port = 443;
-}
+//Start server Http or Https
 if (useHttps) {
   https
     .createServer(
@@ -109,15 +135,13 @@ if (useHttps) {
     )
     .listen(port, "0.0.0.0", undefined, () => {
       logger.info(
-        `Proxy server HTTPS is running on port ${port}, target: ` +
-          process.env.TARGET_URL
+        `Proxy server HTTPS is running on port ${port}, target: ` + target
       );
     });
 } else {
   app.listen(port, "0.0.0.0", () => {
     logger.info(
-      `Proxy server HTTP is running on port ${port}, target: ` +
-        process.env.TARGET_URL
+      `Proxy server HTTP is running on port ${port}, target: ` + target
     );
   });
 }
