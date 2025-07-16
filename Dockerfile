@@ -1,4 +1,4 @@
-FROM node:22
+FROM node:slim
 
 RUN apt-get update && apt-get install -y openssl
 
