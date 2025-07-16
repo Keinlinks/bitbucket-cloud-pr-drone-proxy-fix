@@ -55,8 +55,7 @@ services:
     environment:
       - TARGET_URL=http://drone-server:80
       - PROXY_PORT=443
-      - ENVIRNMENT=production
       - USE_HTTPS=true
-      - BRANCHES_ALLOWED_PUSH=example1,example2
+      - BRANCHES_ALLOWED_PUSH=main,develop
     ports:
       - "443:443"

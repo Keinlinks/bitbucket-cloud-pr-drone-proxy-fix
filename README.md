@@ -63,10 +63,11 @@ For this option, you need to create your own image with the Dockerfile.
     docker run -d ^
       --name bitbucket_cloud_fix ^
       --restart always ^
-      -e TARGET_URL=http://drone-server:3002 ^
+      -e TARGET_URL=http://drone-server:80 ^
       -e PROXY_PORT=443 ^
       -e ENVIRONMENT=production ^
       -e USE_HTTPS=true ^
+      -e BRANCHES_ALLOWED_PUSH=main,develop ^
       -p 443:443 ^
       bitbucket-cloud-pr-drone-fix:latest
     ```
@@ -76,3 +77,10 @@ For this option, you need to create your own image with the Dockerfile.
     ```bash
     docker compose up -d
     ```
+
+## Environment
+
+- **TARGET_URL**: Specifies the destination URL where the reverse proxy forwards incoming requests.
+- **PROXY_PORT**: Defines the port on which the reverse proxy listens for incoming connections.
+- **USE_HTTPS**: Configures the proxy to use HTTPS for secure communication.
+- **BRANCHES_ALLOWED_PUSH**: Specifies a comma-separated list of branch names that the proxy allows for push-related actions.
