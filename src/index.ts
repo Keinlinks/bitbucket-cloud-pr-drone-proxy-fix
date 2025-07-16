@@ -10,8 +10,10 @@ import { WebhookBitbucketCloudPush } from "./models/WebhookBitbucketCloudPush";
 import { ProxyConfig } from "./proxyConfig";
 require("dotenv").config();
 
+let proxyConfig = ProxyConfig.getInstance();
 
 //ENVIRONMENT
+let branchesAllowPush = process.env.BRANCHES_ALLOWED_PUSH;
 let target = process.env.TARGET_URL;
 let useHttps = process.env.USE_HTTPS == "true";
 let port: number;
@@ -24,6 +26,10 @@ try {
 if (!target) {
   logger.error(`Error: TARGET_URL undefined`);
   process.exit(1);
+}
+if (branchesAllowPush){
+  let branches = branchesAllowPush.split(",");
+  proxyConfig.addBranches(branches);
 }
 //Creating server
 const app = express.default();

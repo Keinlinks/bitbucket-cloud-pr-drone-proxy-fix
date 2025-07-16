@@ -12,4 +12,7 @@ export class ProxyConfig {
     }
     return ProxyConfig.instance;
   }
+  public addBranches(branches:string[]){
+    this.branchesAllowPush = this.branchesAllowPush.concat(branches);
+  }
 }
