@@ -4,8 +4,8 @@
 
 This lightweight proxy server acts as a middleware layer to resolve compatibility issues between **Drone CI** and **Bitbucket Cloud**, specifically problems related to **Pull Requests**. It is designed to be easily deployable and highly configurable.
 
-This is useful only if you want:
-- Drone to build your pull requests with Bitbucket Cloud.
+This fix is useful only if you want:
+- Drone to build your **Pull Requests** with Bitbucket Cloud.
 - You don't mind Drone building push events only on the branches you explicitly configure in Environment Variables (like `main` or `develop`).
 
 ## Installation
@@ -26,6 +26,7 @@ For local installation, you need **Node.js 18 or higher**.
     ```bash
     npm install
     ```
+- Create your .env file
 
 - Start the proxy with the entrypoint script (this creates an SSL certificate for HTTPS):
 
@@ -65,7 +66,6 @@ For this option, you need to create your own image with the Dockerfile.
       --restart always ^
       -e TARGET_URL=http://drone-server:80 ^
       -e PROXY_PORT=443 ^
-      -e ENVIRONMENT=production ^
       -e USE_HTTPS=true ^
       -e BRANCHES_ALLOWED_PUSH=main,develop ^
       -p 443:443 ^
