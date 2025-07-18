@@ -363,3 +363,7 @@ export function transformPRtoPush(
 export function isMerge(payload:WebhookBitbucketCloudPush) {
   return payload.push.changes[0].new.target.message.includes("Merged in");
 }
+
+export function isPullrequest(payload:any){
+  return (payload.pullrequest !== null && payload.pullrequest !== undefined);
+}

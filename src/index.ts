@@ -4,7 +4,7 @@ import * as https from "https";
 import type { Request, Response } from "express";
 import { createProxyMiddleware } from "http-proxy-middleware";
 import { WebhookBitbucketCloudPR } from "./models/WebhookBitbucketCloudPR";
-import { transformPRtoPush } from "./utils";
+import { isPullrequest, transformPRtoPush } from "./utils";
 import { logger } from "./logging";
 import { WebhookBitbucketCloudPush } from "./models/WebhookBitbucketCloudPush";
 import { ProxyConfig } from "./proxyConfig";
@@ -63,7 +63,7 @@ const proxyMiddleware = createProxyMiddleware<Request, Response>({
   on: {
     proxyReq(proxyReq, req, res) {
       // New request incoming to the proxy
-      logger.debug(`Received request: ${req.method} ${req.url}`);
+      logger.info(`Received request: ${req.method} ${req.url}`);
       if (
         req.method == "POST" &&
         req.body &&
@@ -73,7 +73,7 @@ const proxyMiddleware = createProxyMiddleware<Request, Response>({
         let bodyWebhookBitbicketCloud = req.body as WebhookBitbucketCloudPR;
 
         try {
-          logger.info(`Transforming Bitbucket Cloud PR to Push event`);
+          logger.debug(`Transforming Bitbucket Cloud PR to Push event`);
           let bodyWebhookBitbicketPush = transformPRtoPush(
             bodyWebhookBitbicketCloud
           );
@@ -105,7 +105,9 @@ const proxyMiddleware = createProxyMiddleware<Request, Response>({
         }
         let proxyConfig = ProxyConfig.getInstance();
 
-        if (proxyConfig.branchesAllowPush.includes(branch)) {
+        if (
+          proxyConfig.branchesAllowPush.includes(branch) && !isPullrequest(bodyWebhookBitbicketPush)
+        ) {
           let bodyData = JSON.stringify(bodyWebhookBitbicketPush);
           proxyReq.setHeader("X-Event-Key", "repo:push");
           proxyReq.setHeader("Content-Type", "application/json");
