@@ -87,14 +87,18 @@ const proxyMiddleware = createProxyMiddleware<Request, Response>({
           logger.error(
             `Error transforming Bitbucket Cloud PR to Push: ${error}`
           );
-          res.status(500).send("Internal Server Error");
+          res
+            .status(400)
+            .send(`Error transforming Bitbucket Cloud PR to Push: ${error}`);
           return;
         }
-      }
-      else if (req.method == "POST" && req.headers["x-event-key"] == "repo:push") {
+      } else if (
+        req.method == "POST" &&
+        req.headers["x-event-key"] == "repo:push"
+      ) {
         let bodyWebhookBitbicketPush = req.body as WebhookBitbucketCloudPush;
         let branch = bodyWebhookBitbicketPush.push.changes[0].new.name;
-        if (!branch){
+        if (!branch) {
           bodyWebhookBitbicketPush.push.changes[0].old.name;
         }
         let proxyConfig = ProxyConfig.getInstance();
@@ -110,13 +114,15 @@ const proxyMiddleware = createProxyMiddleware<Request, Response>({
           logger.debug(
             `Event key: ${req.headers["x-event-key"]} to branch ${branch}, ignored`
           );
-          res.status(200).send("OK");
+          res
+            .status(406)
+            .send("Event ignored: no pull request or push on main/develop");
         }
       }
       //other events like pullrequest:rejected or pullrequest:fulfilled
       else if (req.method == "POST" && req.headers["x-event-key"]) {
         logger.debug(`Event key: ${req.headers["x-event-key"]}, ignored`);
-        res.status(200).send("OK");
+        res.status(406).send("Event ignored: no pull request or push on main/develop");
       }
     },
     error: (err, req, res) => {
