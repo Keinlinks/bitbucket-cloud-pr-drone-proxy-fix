@@ -31,9 +31,6 @@ if (branchesAllowPush){
   let branches = branchesAllowPush.split(",");
   proxyConfig.addBranches(branches);
 }
-//Creating server
-const app = express.default();
-app.use(express.json({ limit: "10mb" }));
 
 //Just in case use Https
 let key = undefined;
@@ -46,6 +43,11 @@ if (useHttps) {
     logger.error(`Error reading SSL certificate files: ${error}`);
   }
 }
+
+//Creating server
+const app = express.default();
+app.disable("x-powered-by");
+app.use(express.json({ limit: "10mb" }));
 
 //Creating proxy middleware
 const proxyMiddleware = createProxyMiddleware<Request, Response>({
