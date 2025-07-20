@@ -4,7 +4,7 @@ import * as https from "https";
 import type { Request, Response } from "express";
 import { createProxyMiddleware } from "http-proxy-middleware";
 import { WebhookBitbucketCloudPR } from "./models/WebhookBitbucketCloudPR";
-import { isPullrequest, transformPRtoPush } from "./utils";
+import { transformPRtoPush } from "./utils";
 import { logger } from "./logging";
 import { WebhookBitbucketCloudPush } from "./models/WebhookBitbucketCloudPush";
 import { ProxyConfig } from "./proxyConfig";
@@ -12,7 +12,7 @@ require("dotenv").config();
 
 let proxyConfig = ProxyConfig.getInstance();
 
-//ENVIRONMENT
+//****ENVIRONMENT****
 let branchesAllowPush = process.env.BRANCHES_ALLOWED_PUSH;
 let target = process.env.TARGET_URL;
 let useHttps = process.env.USE_HTTPS == "true";
@@ -27,29 +27,32 @@ if (!target) {
   logger.error(`Error: TARGET_URL undefined`);
   process.exit(1);
 }
-if (branchesAllowPush){
+if (branchesAllowPush) {
   let branches = branchesAllowPush.split(",");
   proxyConfig.addBranches(branches);
 }
 
-//Just in case use Https
+//***Just in case use Https***
 let key = undefined;
 let cert = undefined;
+let keyPath = process.env.SSL_KEY ? process.env.SSL_KEY : "/certs/key.pem";
+let certPath = process.env.SSL_CERT ? process.env.SSL_CERT : "/certs/cert.pem";
+
 if (useHttps) {
   try {
-    key = fs.readFileSync("/certs/key.pem");
-    cert = fs.readFileSync("/certs/cert.pem");
+    key = fs.readFileSync(keyPath);
+    cert = fs.readFileSync(certPath);
   } catch (error) {
     logger.error(`Error reading SSL certificate files: ${error}`);
   }
 }
 
-//Creating server
+//***Creating server***
 const app = express.default();
 app.disable("x-powered-by");
 app.use(express.json({ limit: "10mb" }));
 
-//Creating proxy middleware
+//***Creating proxy middleware***
 const proxyMiddleware = createProxyMiddleware<Request, Response>({
   target: process.env.TARGET_URL,
   changeOrigin: true,
@@ -62,7 +65,7 @@ const proxyMiddleware = createProxyMiddleware<Request, Response>({
   secure: false,
   on: {
     proxyReq(proxyReq, req, res) {
-      // New request incoming to the proxy
+      // ***REQUEST HANDLER HERE***
       logger.info(`Received request: ${req.method} ${req.url}`);
       if (
         req.method == "POST" &&
@@ -99,15 +102,26 @@ const proxyMiddleware = createProxyMiddleware<Request, Response>({
         req.headers["x-event-key"] == "repo:push"
       ) {
         let bodyWebhookBitbicketPush = req.body as WebhookBitbucketCloudPush;
+        if (
+          bodyWebhookBitbicketPush.push.changes[0].closed ||
+          bodyWebhookBitbicketPush.push.changes[0].new == null
+        ) {
+          logger.debug(
+            `Event ignored: no pull request or push on main/develop`
+          );
+          res
+            .status(406)
+            .send("Event ignored: no pull request or push on main/develop");
+          return;
+        }
         let branch = bodyWebhookBitbicketPush.push.changes[0].new.name;
+
         if (!branch) {
           bodyWebhookBitbicketPush.push.changes[0].old.name;
         }
         let proxyConfig = ProxyConfig.getInstance();
 
-        if (
-          proxyConfig.branchesAllowPush.includes(branch) && !isPullrequest(bodyWebhookBitbicketPush)
-        ) {
+        if (proxyConfig.branchesAllowPush.includes(branch)) {
           let bodyData = JSON.stringify(bodyWebhookBitbicketPush);
           proxyReq.setHeader("X-Event-Key", "repo:push");
           proxyReq.setHeader("Content-Type", "application/json");
@@ -126,20 +140,20 @@ const proxyMiddleware = createProxyMiddleware<Request, Response>({
       //other events like pullrequest:rejected or pullrequest:fulfilled
       else if (req.method == "POST" && req.headers["x-event-key"]) {
         logger.debug(`Event key: ${req.headers["x-event-key"]}, ignored`);
-        res.status(406).send("Event ignored: no pull request or push on main/develop");
+        res
+          .status(406)
+          .send("Event ignored: no pull request or push on main/develop");
       }
     },
     error: (err, req, res) => {
       logger.error(`Error in proxy request: ${err.message}`);
     },
-    proxyRes: (proxyRes, req, res) => {
-      
-    },
+    proxyRes: (proxyRes, req, res) => {},
   },
 });
 app.use("/", proxyMiddleware);
 
-//Start server Http or Https
+//***Start server Http or Https***
 if (useHttps) {
   https
     .createServer(

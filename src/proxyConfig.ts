@@ -1,7 +1,7 @@
 export class ProxyConfig {
   private static instance: ProxyConfig | null = null;
 
-  //Edit this branch list to allow pushes 
+  //***Edit this branch list to allow pushes***
   branchesAllowPush: string[] = ["main", "develop", "master"];
 
   private constructor() {}
@@ -12,7 +12,7 @@ export class ProxyConfig {
     }
     return ProxyConfig.instance;
   }
-  public addBranches(branches:string[]){
+  public addBranches(branches: string[]) {
     this.branchesAllowPush = this.branchesAllowPush.concat(branches);
   }
 }
